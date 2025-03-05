@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mini jeu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://static.vecteezy.com/ti/vecteur-libre/p1/3303295-montagnes-fond-jeu-vectoriel.jpg');
+            background-size: cover;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 36px;
+            text-align: center;
+        }
+        #rules {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            max-width: 300px;
+        }
+        #gameArea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        #clickButton, #startButton {
+            font-size: 20px;
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background-color: #00aaff;
+            color: white;
+            font-weight: bold;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s, background-color 0.3s;
+        }
+        #clickButton:active {
+            transform: scale(1.1);
+            background-color: #ffcc00;
+        }
+        #timer {
+            font-size: 40px;
+            font-weight: bold;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        #progressBar {
+            width: 80%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #progressFill {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
+            transition: width 0.2s;
+        }
+        #levelDisplay {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+		.audio-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 70px;
+		}
+			
+	</style>
+</head>
+<body>
+    <h1>Jeu de Clic avec niveaux</h1>
+    <div id="rules">
+        <h2>Règles du jeu :</h2>
+        <ul>
+            <li><strong>Niveau 1 :</strong> Faites 50 clics en 10 secondes pour passer au niveau 2.</li>
+            <li><strong>Niveau 2 :</strong> Faites 100 clics en 10 secondes pour gagner la partie.</li>
+            <li>Si vous échouez au niveau 2, vous retournez au niveau 1.</li>
+            <li>En cas de victoire, un message s'affiche et une nouvelle page s'ouvre.</li>
+            <li>Suivez votre progression de clics avec la barre verte sous le bouton !</li>
+        </ul>
+    </div>
+
+    <div id="gameArea">
+        <div id="levelDisplay">Niveau : <span id="level">1</span></div>
+        <button id="startButton" onclick="startGame()">Démarrer le jeu</button>
+        <button id="clickButton" onclick="incrementScore()" disabled>Cliquez ici</button>
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+        <p>Score actuel : <span id="score">0</span></p>
+        <span id="timer">10</span>
+		
+		<div class="audio-container">
+        <audio src="Tape Arcade - Return.mp3" controls></audio>
+    </div>
+
+    <script>
+        let score = 0;
+        let level = 1;
+        let timeLeft = 10;
+        let gameActive = false;
+        const levelGoals = [50, 100];
+
+        function startGame() {
+            score = 0;
+            timeLeft = 10;
+            gameActive = true;
+            document.getElementById('score').innerText = score;
+            document.getElementById('timer').innerText = timeLeft;
+            document.getElementById('level').innerText = level;
+            document.getElementById('clickButton').disabled = false;
+            document.getElementById('startButton').style.display = 'none';
+            updateProgress();
+            runTimer();
+        }
+
+        function runTimer() {
+            let countdown = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById('timer').innerText = timeLeft;
+                } else {
+                    clearInterval(countdown);
+                    gameActive = false;
+                    document.getElementById('clickButton').disabled = true;
+                    checkLevel();
+                }
+            }, 1000);
+        }
+
+        function incrementScore() {
+            if (gameActive) {
+                score++;
+                document.getElementById('score').innerText = score;
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const progress = Math.min((score / levelGoals[level - 1]) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function checkLevel() {
+            if (score >= levelGoals[level - 1]) {
+                if (level === levelGoals.length) {
+                    alert('Félicitations ! Vous avez réussi tous les niveaux ! 🎉');
+                    window.open('victoire.html', '_blank');
+                    resetGame();
+                } else {
+                    alert(`Bravo ! Niveau ${level} réussi. Passage au niveau ${level + 1} !`);
+                    level++;
+                    startGame();
+                }
+            } else {
+                if (level === 2) {
+                    alert(`Échec au niveau 2. Retour au niveau 1 !`);
+                    level = 1;
+                } else {
+                    alert(`Dommage ! Vous avez fait ${score} clics. Réessayez le niveau ${level}.`);
+                }
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            document.getElementById('startButton').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
